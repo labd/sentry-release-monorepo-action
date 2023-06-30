@@ -1,0 +1,42 @@
+name: Sentry Release
+description: Create a new Sentry release and upload sourcemaps
+
+inputs:
+  package-name:
+    description: 'The name of the package to release'
+    required: true
+  release-name:
+    description: 'The name of the release to create'
+    required: true
+  sourcemap-flags:
+    description: 'Flags to pass to sentry-cli'
+    required: false
+    default: '--ext .js --ext .mjs --ext .map '
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Run"
+      shell: bash
+      env:
+        SENTRY_RELEASE: ${{ inputs.release-name }}
+      run: |
+
+        # We need the latest commit id since we cannot rely on sentry's --auto
+        # feature since we are working in a mono repo. Otherwise only one backend/packages/
+        # gets the correct commits.
+        latest=$(sentry-cli releases list --raw | grep ${{ inputs.package-name }} | head -1 | sed 's/.*@sha-\(.*\)$/\1/')
+        echo "Latest commit (short): $latest"
+
+        # Translate short hash to full hash
+        latest=$(git rev-parse $latest)
+        echo "Latest commit (long): $latest"
+
+        # Debug
+        sentry-cli releases list --raw | grep ${{ inputs.package-name }}
+        echo "${GITHUB_REPOSITORY}@${latest}..${GITHUB_SHA}"
+
+        sentry-cli releases new "${SENTRY_RELEASE}"
+        sentry-cli releases set-commits "${SENTRY_RELEASE}" --commit "${GITHUB_REPOSITORY}@${latest}..${GITHUB_SHA}"
+        sentry-cli releases files upload-sourcemaps ${{ inputs.sourcemap-flags }} --validate sourcemaps --wait .
