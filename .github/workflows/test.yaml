@@ -1,0 +1,23 @@
+name: Test
+
+on: [push]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Sentry CLI
+        uses: labd/setup-sentry-cli@main
+        with:
+          version: latest
+          token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          organization: ${{ vars.SENTRY_ORG }}
+          project: ${{ vars.SENTRY_PROJECT }}
+
+      - name: Test
+        uses: ./
+        with:
+          package-name: "test"
+          release-name: "test@${{ github.sha }}"
