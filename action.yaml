@@ -27,19 +27,23 @@ runs:
         SENTRY_RELEASE: ${{ inputs.release-name }}
       working-directory: ${{ inputs.working-directory }}
       run: |
-
         # We need the latest commit id since we cannot rely on sentry's --auto
         # feature since we are working in a mono repo. Otherwise only one backend/packages/
         # gets the correct commits.
-        latest=$(sentry-cli releases list --raw | grep ${{ inputs.package-name }} | head -1 | sed 's/.*@sha-\(.*\)$/\1/')
-        echo "Latest commit (short): $latest"
+        sentry-cli releases list --raw
+        latest=$(sentry-cli releases list --raw | grep { ${{ inputs.package-name }} || true } | head -1 | sed 's/.*@sha-\(.*\)$/\1/')
 
-        # Translate short hash to full hash
-        latest=$(git rev-parse $latest)
-        echo "Latest commit (long): $latest"
+        if [ -z "$latest" ]; then
+          echo "No previous release found, using HEAD as latest commit"
+          latest="HEAD"
+        else
+          # Translate short hash to full hash
+          echo "Latest commit (short): $latest"
+          latest=$(git rev-parse $latest)
+          echo "Latest commit (long): $latest"
+        fi
 
         # Debug
-        sentry-cli releases list --raw | grep ${{ inputs.package-name }}
         echo "${GITHUB_REPOSITORY}@${latest}..${GITHUB_SHA}"
 
         sentry-cli releases new "${SENTRY_RELEASE}"
