@@ -17,35 +17,20 @@ inputs:
     required: false
     default: '.'
 
-
 runs:
   using: "composite"
   steps:
+    - name: Derive appropriate SHAs for base and head for `nx affected` commands
+      id: setSHAs
+      uses: nrwl/nx-set-shas@v3
+
     - name: "Run"
       shell: bash
       env:
         SENTRY_RELEASE: ${{ inputs.release-name }}
       working-directory: ${{ inputs.working-directory }}
       run: |
-        # We need the latest commit id since we cannot rely on sentry's --auto
-        # feature since we are working in a mono repo. Otherwise only one backend/packages/
-        # gets the correct commits.
-        sentry-cli releases list --raw
-        latest=$(sentry-cli releases list --raw | grep { ${{ inputs.package-name }} || true } | head -1 | sed 's/.*@sha-\(.*\)$/\1/')
-
-        if [ -z "$latest" ]; then
-          echo "No previous release found, using HEAD as latest commit"
-          latest="HEAD"
-        else
-          # Translate short hash to full hash
-          echo "Latest commit (short): $latest"
-          latest=$(git rev-parse $latest)
-          echo "Latest commit (long): $latest"
-        fi
-
-        # Debug
-        echo "${GITHUB_REPOSITORY}@${latest}..${GITHUB_SHA}"
-
+        echo "${GITHUB_REPOSITORY}@${{ steps.setSHAs.outputs.base }}..${{ steps.setSHAs.outputs.head }}"
         sentry-cli releases new "${SENTRY_RELEASE}"
-        sentry-cli releases set-commits "${SENTRY_RELEASE}" --commit "${GITHUB_REPOSITORY}@${latest}..${GITHUB_SHA}"
+        sentry-cli releases set-commits "${SENTRY_RELEASE}" --commit "${GITHUB_REPOSITORY}@${{ steps.setSHAs.outputs.base }}..${{ steps.setSHAs.outputs.head }}"
         sentry-cli releases files upload-sourcemaps ${{ inputs.sourcemap-flags }} --validate sourcemaps --wait .
