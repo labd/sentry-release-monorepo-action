@@ -33,4 +33,4 @@ runs:
         echo "${GITHUB_REPOSITORY}@${{ steps.setSHAs.outputs.base }}..${{ steps.setSHAs.outputs.head }}"
         sentry-cli releases new "${SENTRY_RELEASE}"
         sentry-cli releases set-commits "${SENTRY_RELEASE}" --commit "${GITHUB_REPOSITORY}@${{ steps.setSHAs.outputs.base }}..${{ steps.setSHAs.outputs.head }}"
-        sentry-cli releases files upload-sourcemaps ${{ inputs.sourcemap-flags }} --validate sourcemaps --wait .
+        sentry-cli releases files "${SENTRY_RELEASE}" upload-sourcemaps ${{ inputs.sourcemap-flags }} --validate sourcemaps --wait .
