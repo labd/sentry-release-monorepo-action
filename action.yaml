@@ -31,6 +31,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       run: |
         echo "${GITHUB_REPOSITORY}@${{ steps.setSHAs.outputs.base }}..${{ steps.setSHAs.outputs.head }}"
+        sentry-cli sourcemaps inject .
+        sentry-cli sourcemaps upload --release "${SENTRY_RELEASE}" ${{ inputs.sourcemap-flags }} --wait --validate .
         sentry-cli releases new "${SENTRY_RELEASE}"
         sentry-cli releases set-commits "${SENTRY_RELEASE}" --commit "${GITHUB_REPOSITORY}@${{ steps.setSHAs.outputs.base }}..${{ steps.setSHAs.outputs.head }}"
-        sentry-cli releases files "${SENTRY_RELEASE}" upload-sourcemaps ${{ inputs.sourcemap-flags }} --validate sourcemaps --wait .
