@@ -7,9 +7,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
       - name: Setup Sentry CLI
-        uses: labd/setup-sentry-cli@main
+        uses: labd/setup-sentry-cli@3e938c54b3018bdd019973689ef984e033b0454b # main
         with:
           version: latest
           token: ${{ secrets.SENTRY_AUTH_TOKEN }}

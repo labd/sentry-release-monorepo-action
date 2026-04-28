@@ -22,15 +22,18 @@ runs:
   steps:
     - name: Derive appropriate SHAs for base and head for `nx affected` commands
       id: setSHAs
-      uses: nrwl/nx-set-shas@v3
+      uses: nrwl/nx-set-shas@0e2d18b530b83b68263ff7b74e46b1ba300c83fc # v3.3.2
 
     - name: "Run"
       shell: bash
       env:
         SENTRY_RELEASE: ${{ inputs.release-name }}
+        SOURCEMAP_FLAGS: ${{ inputs.sourcemap-flags }}
+        NX_BASE: ${{ steps.setSHAs.outputs.base }}
+        NX_HEAD: ${{ steps.setSHAs.outputs.head }}
       working-directory: ${{ inputs.working-directory }}
       run: |
-        echo "${GITHUB_REPOSITORY}@${{ steps.setSHAs.outputs.base }}..${{ steps.setSHAs.outputs.head }}"
+        echo "${GITHUB_REPOSITORY}@${NX_BASE}..${NX_HEAD}"
         sentry-cli releases new "${SENTRY_RELEASE}"
-        sentry-cli releases set-commits "${SENTRY_RELEASE}" --commit "${GITHUB_REPOSITORY}@${{ steps.setSHAs.outputs.base }}..${{ steps.setSHAs.outputs.head }}"
-        sentry-cli releases files "${SENTRY_RELEASE}" upload-sourcemaps ${{ inputs.sourcemap-flags }} --validate sourcemaps --wait .
+        sentry-cli releases set-commits "${SENTRY_RELEASE}" --commit "${GITHUB_REPOSITORY}@${NX_BASE}..${NX_HEAD}"
+        sentry-cli releases files "${SENTRY_RELEASE}" upload-sourcemaps ${SOURCEMAP_FLAGS} --validate sourcemaps --wait .
