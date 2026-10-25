@@ -28,9 +28,13 @@ runs:
       shell: bash
       env:
         SENTRY_RELEASE: ${{ inputs.release-name }}
+        BASE_SHA: ${{ steps.setSHAs.outputs.base }}
+        HEAD_SHA: ${{ steps.setSHAs.outputs.head }}
+        SOURCEMAP_FLAGS: ${{ inputs.sourcemap-flags }}
       working-directory: ${{ inputs.working-directory }}
       run: |
-        echo "${GITHUB_REPOSITORY}@${{ steps.setSHAs.outputs.base }}..${{ steps.setSHAs.outputs.head }}"
+        read -r -a sourcemap_flags <<< "${SOURCEMAP_FLAGS}"
+        echo "${GITHUB_REPOSITORY}@${BASE_SHA}..${HEAD_SHA}"
         sentry-cli releases new "${SENTRY_RELEASE}"
-        sentry-cli releases set-commits "${SENTRY_RELEASE}" --commit "${GITHUB_REPOSITORY}@${{ steps.setSHAs.outputs.base }}..${{ steps.setSHAs.outputs.head }}"
-        sentry-cli releases files "${SENTRY_RELEASE}" upload-sourcemaps ${{ inputs.sourcemap-flags }} --validate sourcemaps --wait .
+        sentry-cli releases set-commits "${SENTRY_RELEASE}" --commit "${GITHUB_REPOSITORY}@${BASE_SHA}..${HEAD_SHA}"
+        sentry-cli releases files "${SENTRY_RELEASE}" upload-sourcemaps "${sourcemap_flags[@]}" --validate sourcemaps --wait .
