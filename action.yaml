@@ -22,7 +22,7 @@ runs:
   steps:
     - name: Derive appropriate SHAs for base and head for `nx affected` commands
       id: setSHAs
-      uses: nrwl/nx-set-shas@v3
+      uses: nrwl/nx-set-shas@0e2d18b530b83b68263ff7b74e46b1ba300c83fc # v3.3.2
 
     - name: "Run"
       shell: bash
